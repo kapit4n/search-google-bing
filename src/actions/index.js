@@ -24,39 +24,52 @@ export const receiveSearch = (data) => ({
   data
 });
 
-export const fetchSearch = (searchText, state) => dispatch => {
+export const searchAction = (searchText) => (dispatch, getState) => {
+  const state = getState();
   const googleKey = process.env.REACT_APP_GOOGLE_API_KEY;
   const bingKey = process.env.REACT_APP_BING_API_KEY;
 
-  dispatch(requestSearch())
+  dispatch(requestSearch());
+
   let googleReq = Axios.get(`https://www.googleapis.com/customsearch/v1?key=${googleKey}&cx=000888210889775888983:y9tkcjel090&q=${searchText}`);
-  let bingReq = Axios.get(`https://api.cognitive.microsoft.com/bing/v5.0/news/search?q=${searchText}`,
+  let bingReq = Axios.get(`https://api.cognitive.microsoft.com/bing/v5.0/search?q=${searchText}`,
     {
       headers: { 'Ocp-Apim-Subscription-Key': bingKey }
     });
 
   if (state.searchEngine === 'google') {
-    return googleReq.then(data => {
-      return dispatch(receiveSearch(data.data.items));
+    googleReq.then(data => {
+      dispatch(receiveSearch(data.data.items));
     })
   } else if (state.searchEngine === 'bing') {
-    return bingReq.then(data => {
-      return dispatch(receiveSearch(data.data.value.map(x => {
-        return { title: x.name, htmlSnippet: x.description, link: x.url, displayLink: x.url }
+    bingReq.then(data => {
+      console.log(data);
+
+      dispatch(receiveSearch(data.data.webPages.value.map(x => {
+        return { title: x.name, htmlSnippet: x.snippet, link: x.url, displayLink: x.displayUrl }
       })));
     });
   } else if (state.searchEngine === 'both') {
-    return Promise.all([bingReq, googleReq]).then(values => {
-      let bingData = values[0].data.value.map(x => {
-        return { title: x.name, htmlSnippet: x.description, link: x.url, displayLink: x.url }
+    Promise.all([bingReq, googleReq]).then(values => {
+      let bingData = values[0].data.webPages.value.map(x => {
+        return { title: x.name, htmlSnippet: x.snippet, link: x.url, displayLink: x.url }
       });
       let googleData = values[1].data.items;
-      let joinData = [...bingData, ...googleData];
-      return dispatch(receiveSearch(joinData));
+
+      let joinData = {};
+
+      googleData.forEach(x => {
+        joinData[x.link] = Object.assign({}, x, { count: 1 })
+      });
+
+      bingData.forEach(x => {
+        if (joinData[x.link]) {
+          joinData[x.link] = Object.assign({}, joinData[x.link], { count: joinData[x.link].count + 1 })
+        } else {
+          joinData[x.link] = Object.assign({}, joinData[x.link], { count: 1 })
+        }
+      });
+      dispatch(receiveSearch(Object.values(joinData)));
     })
   }
-}
-
-export const searchAction = searchText => (dispatch, getState) => {
-  return dispatch(fetchSearch(searchText, getState()))
 }

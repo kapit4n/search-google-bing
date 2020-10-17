@@ -9,7 +9,9 @@ export default function Detail({ searchItem }) {
 
   return (
     <div style={itemStyle}>
-      <div style={headerLinkStyle}><a href={searchItem.link}>{searchItem.title}</a></div>
+      <div style={headerLinkStyle}><a href={searchItem.link}>{searchItem.title}</a>
+        {searchItem.count && (<span style={{ borderLeft: '1rem' }}>({searchItem.count})</span>)}
+      </div>
       <div style={descriptionStyle} dangerouslySetInnerHTML={{ __html: searchItem.htmlSnippet }} >
       </div>
     </div>

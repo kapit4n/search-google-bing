@@ -44,7 +44,7 @@ const search = (state = {
 const rootReducer = combineReducers({
   searchText,
   searchEngine,
-  search
+  search,
 })
 
 export default rootReducer;

@@ -40,7 +40,7 @@ class App extends Component {
         <div>
           <h2>Search result</h2>
           {this.props.items.map(it => (
-            <Detail searchItem={it} />
+            <Detail key={it.id} searchItem={it} />
           ))}
         </div>
       </div >
